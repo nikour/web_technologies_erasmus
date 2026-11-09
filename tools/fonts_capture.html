@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Fonts capture (uniform script)</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  body{font-family:system-ui,"Segoe UI",Arial,sans-serif;max-width:900px;margin:24px auto;padding:0 16px;color:#14213d;line-height:1.45}
+  h1{font-size:26px;margin:0 0 4px} .sub{color:#5a6578;margin:0 0 18px}
+  ol{padding-left:20px} label{display:block;font-weight:600;margin:10px 0 3px}
+  input,select{font:inherit;padding:6px 8px;border:1px solid #bbb;border-radius:6px;width:100%;box-sizing:border-box}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  button{font:inherit;font-weight:700;padding:10px 18px;border:0;border-radius:8px;background:#0f766e;color:#fff;cursor:pointer;margin:14px 10px 0 0}
+  .mono{font-family:Consolas,monospace;word-break:break-all}
+  .warn{background:#fdebd0;border-left:5px solid #b45309;padding:8px 12px;border-radius:0 8px 8px 0;margin-top:10px}
+  .ok{background:#dcf3e2;border-left:5px solid #15803d;padding:8px 12px;border-radius:0 8px 8px 0;margin-top:10px}
+  table{border-collapse:collapse;margin-top:10px;width:100%} td,th{padding:4px 10px 4px 0;vertical-align:top;text-align:left;border-bottom:1px solid #e5e1d6}
+  .fonts{font-size:13px;color:#333}
+</style>
+</head>
+<body>
+<h1>Fonts capture</h1>
+<p class="sub">Uniform script for the class data pool. Everybody tests exactly the same list of candidate fonts, so the results can be pooled and compared.</p>
+
+<ol>
+  <li>Fill in the fields below (use a <b>nickname</b>, not your real name).</li>
+  <li>The page tests every candidate font automatically (takes a moment).</li>
+  <li>Click <b>Save fonts file</b> and put the downloaded file into the shared repository (see the brief).</li>
+</ol>
+<p>Repeat this in every setting you can: other browsers, a private window, with privacy extensions, Brave, Tor / Mullvad, other devices. <b>One file per setting.</b></p>
+
+<div class="row">
+  <div><label for="nick">Nickname</label><input id="nick" placeholder="e.g. fox42" maxlength="24"></div>
+  <div><label for="setting">Setting</label>
+    <select id="setting">
+      <option>default</option><option>private</option><option>extension</option><option>brave-shields</option>
+      <option>tor</option><option>mullvad</option><option>firefox-rfp</option><option>other</option>
+    </select></div>
+</div>
+<div class="row">
+  <div><label for="browser">Browser and version</label><input id="browser" placeholder="e.g. firefox-132"></div>
+  <div><label for="os">Operating system</label><input id="os" placeholder="e.g. windows11, macos14, ubuntu24, android14"></div>
+</div>
+<label for="notes">Optional note (installed software you know of, extension names; no personal data)</label>
+<input id="notes" maxlength="120" placeholder="e.g. Microsoft Office, Adobe Creative Cloud">
+
+<div id="status"></div>
+<table>
+  <tr><th>Candidates tested</th><td id="ntested">…</td></tr>
+  <tr><th>Fonts found</th><td id="nfound">…</td></tr>
+  <tr><th>Stable between passes</th><td id="stable">…</td></tr>
+  <tr><th>Time</th><td id="time">…</td></tr>
+  <tr><th>File name</th><td class="mono" id="fname">…</td></tr>
+</table>
+<button id="save">Save fonts file</button><button id="rerun" style="background:#5a6578">Run again</button>
+<p class="fonts" id="list"></p>
+
+<script>
+/* ---------- candidate list (identical for everybody: do not edit) ---------- */
+const LIST_VERSION = 'v1';
+const GROUPS = {
+  windows: ['Arial','Arial Black','Arial Narrow','Arial Rounded MT Bold','Bahnschrift','Calibri','Calibri Light','Cambria','Cambria Math','Candara','Comic Sans MS','Consolas','Constantia','Corbel','Courier New','Ebrima','Franklin Gothic Medium','Gabriola','Gadugi','Georgia','HoloLens MDL2 Assets','Impact','Ink Free','Javanese Text','Leelawadee UI','Lucida Console','Lucida Sans Unicode','Malgun Gothic','Marlett','Microsoft Himalaya','Microsoft JhengHei','Microsoft New Tai Lue','Microsoft PhagsPa','Microsoft Sans Serif','Microsoft Tai Le','Microsoft YaHei','Microsoft Yi Baiti','MingLiU-ExtB','Mongolian Baiti','MS Gothic','MV Boli','Myanmar Text','Nirmala UI','Palatino Linotype','Segoe MDL2 Assets','Segoe Print','Segoe Script','Segoe UI','Segoe UI Emoji','Segoe UI Historic','Segoe UI Symbol','SimSun','Sitka Text','Sylfaen','Symbol','Tahoma','Times New Roman','Trebuchet MS','Verdana','Webdings','Wingdings','Yu Gothic'],
+  office: ['Agency FB','Algerian','Baskerville Old Face','Bauhaus 93','Bell MT','Berlin Sans FB','Bernard MT Condensed','Book Antiqua','Bookman Old Style','Bookshelf Symbol 7','Britannic Bold','Brush Script MT','Calisto MT','Castellar','Centaur','Century','Century Gothic','Century Schoolbook','Chiller','Colonna MT','Cooper Black','Copperplate Gothic Bold','Curlz MT','Edwardian Script ITC','Elephant','Engravers MT','Eras Bold ITC','Felix Titling','Footlight MT Light','Forte','Franklin Gothic Book','Freestyle Script','French Script MT','Garamond','Gigi','Gill Sans MT','Gloucester MT Extra Condensed','Goudy Old Style','Haettenschweiler','Harlow Solid Italic','Harrington','High Tower Text','Imprint MT Shadow','Informal Roman','Jokerman','Juice ITC','Kristen ITC','Kunstler Script','Lucida Bright','Lucida Calligraphy','Lucida Fax','Lucida Handwriting','Lucida Sans','Magneto','Maiandra GD','Matura MT Script Capitals','Mistral','Modern No. 20','Monotype Corsiva','Niagara Engraved','OCR A Extended','Old English Text MT','Onyx','Palace Script MT','Papyrus','Parchment','Perpetua','Playbill','Poor Richard','Pristina','Rage Italic','Ravie','Rockwell','Rockwell Condensed','Script MT Bold','Showcard Gothic','Snap ITC','Stencil','Tempus Sans ITC','Tw Cen MT','Viner Hand ITC','Vivaldi','Vladimir Script','Wide Latin','Wingdings 2','Wingdings 3'],
+  macos: ['American Typewriter','Andale Mono','Apple Chancery','Apple Color Emoji','Apple SD Gothic Neo','Arial Hebrew','Avenir','Avenir Next','Avenir Next Condensed','Baskerville','Big Caslon','Bodoni 72','Bradley Hand','Chalkboard','Chalkboard SE','Chalkduster','Cochin','Copperplate','Courier','Didot','Futura','Geneva','Gill Sans','Helvetica','Helvetica Neue','Herculanum','Hoefler Text','Lucida Grande','Luminari','Marker Felt','Menlo','Monaco','Noteworthy','Optima','Palatino','Papyrus Condensed','Phosphate','PingFang SC','PT Sans','Skia','Snell Roundhand','Thonburi','Times','Trattatello','Zapfino','Zapf Dingbats','Charter','Seravek','Superclarendon','Rockwell Nova'],
+  linux_open: ['DejaVu Sans','DejaVu Sans Mono','DejaVu Serif','Liberation Sans','Liberation Serif','Liberation Mono','Noto Sans','Noto Serif','Noto Sans Mono','Noto Color Emoji','Ubuntu','Ubuntu Mono','Ubuntu Condensed','Cantarell','Droid Sans','Droid Serif','Droid Sans Mono','Roboto','Roboto Mono','Roboto Condensed','Roboto Slab','FreeSans','FreeSerif','FreeMono','Nimbus Sans','Nimbus Roman','Nimbus Mono PS','URW Gothic','C059','Bitstream Vera Sans','Cousine','Arimo','Tinos','Lato','Open Sans','Source Sans Pro','Source Serif Pro','Source Code Pro','Fira Sans','Fira Code','Fira Mono','Inter','Montserrat','Poppins','Raleway','Merriweather','PT Serif','Playfair Display','Oswald','Hack','JetBrains Mono','Cascadia Code','Cascadia Mono','Comic Neue','Lora','Nunito','Work Sans','Quicksand'],
+  design_tex: ['Adobe Garamond Pro','Adobe Caslon Pro','Minion Pro','Myriad Pro','Trajan Pro','Adobe Clean','Source Han Sans','Univers','Gotham','Proxima Nova','Futura PT','Helvetica LT Std','Avenir LT Std','Frutiger','Bembo','Sabon','CMU Serif','CMU Sans Serif','CMU Typewriter Text','Latin Modern Roman','Latin Modern Sans','Latin Modern Mono','STIX Two Text','STIXGeneral','Libertinus Serif','TeX Gyre Heros','TeX Gyre Termes','Computer Modern'],
+  international: ['Mangal','Kartika','Latha','Raavi','Shruti','Tunga','Vrinda','Gautami','Iskoola Pota','DokChampa','Estrangelo Edessa','Kalinga','Plantagenet Cherokee','Aparajita','Kokila','Utsaah','Narkisim','David','Miriam','Gisha','Aharoni','Levenim MT','FrankRuehl','Rod','Nyala','Shonar Bangla','Vani','Euphemia','Simplified Arabic','Traditional Arabic','Arabic Typesetting','Andalus','Sakkal Majalla','Urdu Typesetting','DaunPenh','MoolBoran','Khmer UI','Lao UI','Meiryo','Meiryo UI','MS Mincho','MS PGothic','MS UI Gothic','NSimSun','SimHei','KaiTi','FangSong','DFKai-SB','PMingLiU','Batang','Dotum','Gulim','Gungsuh','Noto Sans CJK JP','Noto Sans CJK SC','Noto Serif CJK JP','Noto Sans Arabic','Noto Sans Hebrew','Noto Sans Devanagari','Noto Sans Thai','Hiragino Sans','Hiragino Kaku Gothic Pro','Hiragino Mincho Pro','Heiti SC','STHeiti','Songti SC','Kaiti SC','AppleGothic','Tahoma Bold Arabic']
+};
+const seen = new Set(); const CANDIDATES = [];
+for (const [g, arr] of Object.entries(GROUPS)) GROUPS[g] = arr.filter(f => !seen.has(f) && seen.add(f));
+for (const arr of Object.values(GROUPS)) CANDIDATES.push(...arr);
+
+/* ---------- detection: compare against three base families (width AND height) ---------- */
+function detect() {
+  const bases = ['monospace', 'sans-serif', 'serif'];
+  const span = document.createElement('span');
+  span.style.cssText = 'position:absolute;left:-9999px;top:0;font-size:72px;white-space:nowrap;font-variant:normal;letter-spacing:normal';
+  span.textContent = 'mmmmmmmmmmlli';
+  document.body.appendChild(span);
+  const size = f => { span.style.fontFamily = f; return span.offsetWidth + 'x' + span.offsetHeight; };
+  const base = bases.map(size);
+  const found = CANDIDATES.filter(f => bases.some((b, i) => size("'" + f + "'," + b) !== base[i]));
+  span.remove();
+  return found.sort();
+}
+
+/* ---------- page logic ---------- */
+const $ = id => document.getElementById(id);
+const clean = s => (s || '').toLowerCase().replace(/[^a-z0-9.\-]+/g, '-').replace(/^-+|-+$/g, '') || 'x';
+function guessBrowser() {
+  const u = navigator.userAgent; let m;
+  if ((m = u.match(/Edg\/(\d+)/))) return 'edge-' + m[1];
+  if ((m = u.match(/Firefox\/(\d+)/))) return 'firefox-' + m[1];
+  if ((m = u.match(/Chrome\/(\d+)/))) return (navigator.brave ? 'brave-' : 'chrome-') + m[1];
+  if ((m = u.match(/Version\/(\d+).*Safari/))) return 'safari-' + m[1];
+  return '';
+}
+function guessOS() {
+  const u = navigator.userAgent;
+  if (/Windows NT 10/.test(u)) return 'windows10-11'; if (/Android/.test(u)) return 'android';
+  if (/iPhone|iPad/.test(u)) return 'ios'; if (/Mac OS X/.test(u)) return 'macos'; if (/Linux/.test(u)) return 'linux';
+  return '';
+}
+const params = new URLSearchParams(location.search);
+try { $('nick').value = params.get('nick') || localStorage.getItem('fp_nick') || ''; } catch (e) { $('nick').value = params.get('nick') || ''; }
+$('browser').value = params.get('browser') || guessBrowser();
+$('os').value = params.get('os') || guessOS();
+if (params.get('setting')) $('setting').value = params.get('setting');
+
+let result = null;
+function fileBase() { return ['fonts', clean($('nick').value), clean($('browser').value), clean($('os').value), clean($('setting').value)].join('__'); }
+function updateName() { $('fname').textContent = fileBase() + '.json'; }
+function run() {
+  $('status').innerHTML = '';
+  const t0 = performance.now();
+  detect();                                   // warm-up pass: browsers may load fonts lazily, so the first pass can differ
+  const passes = [detect()];
+  let stable = false;
+  for (let i = 0; i < 5; i++) {               // measure until two consecutive passes agree (max 6)
+    passes.push(detect());
+    if (JSON.stringify(passes[passes.length - 1]) === JSON.stringify(passes[passes.length - 2])) { stable = true; break; }
+  }
+  const a = passes[passes.length - 1];
+  const ms = Math.round(performance.now() - t0);
+  result = { format: 'fonts-v1', listVersion: LIST_VERSION, testedCount: CANDIDATES.length, foundCount: a.length, stableBetweenRuns: stable,
+             installed: a, passesNeeded: passes.length, userAgent: navigator.userAgent, date: new Date().toISOString().slice(0, 10), detectionMs: ms };
+  window.__result = result;
+  $('ntested').textContent = CANDIDATES.length; $('nfound').textContent = a.length;
+  $('stable').textContent = stable ? 'yes (' + passes.length + ' passes)' : 'NO: results keep changing between passes (noise or protection?)';
+  $('time').textContent = ms + ' ms (including warm-up)';
+  $('list').textContent = a.join(' · ');
+  $('status').innerHTML = a.length === 0
+    ? '<div class="warn"><b>No candidate font was detected.</b> That is a valid result (e.g. some protections hide fonts). Save it anyway and describe the setting.</div>'
+    : '<div class="ok">Done. Check the fields above, then save the file.</div>';
+  updateName();
+}
+['nick', 'browser', 'os', 'setting', 'notes'].forEach(id => $(id).addEventListener('input', () => {
+  updateName(); try { if (id === 'nick') localStorage.setItem('fp_nick', $('nick').value); } catch (e) {}
+}));
+$('rerun').addEventListener('click', run);
+$('save').addEventListener('click', () => {
+  if (!result) return;
+  if (!$('nick').value.trim()) { alert('Please enter a nickname first.'); return; }
+  const out = Object.assign({ nick: clean($('nick').value), browser: clean($('browser').value), os: clean($('os').value), setting: clean($('setting').value), notes: $('notes').value },
+                            result, { testedByGroup: GROUPS });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([JSON.stringify(out, null, 1)], { type: 'application/json' }));
+  a.download = fileBase() + '.json'; document.body.appendChild(a); a.click(); a.remove();
+});
+run();
+</script>
+</body>
+</html>

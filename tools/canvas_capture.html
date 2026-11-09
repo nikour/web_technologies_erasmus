@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Canvas capture (uniform script)</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  body{font-family:system-ui,"Segoe UI",Arial,sans-serif;max-width:860px;margin:24px auto;padding:0 16px;color:#14213d;line-height:1.45}
+  h1{font-size:26px;margin:0 0 4px} .sub{color:#5a6578;margin:0 0 18px}
+  ol{padding-left:20px} label{display:block;font-weight:600;margin:10px 0 3px}
+  input,select{font:inherit;padding:6px 8px;border:1px solid #bbb;border-radius:6px;width:100%;box-sizing:border-box}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  canvas{border:1px solid #bbb;border-radius:6px;display:block;margin:14px 0 6px;max-width:100%}
+  button{font:inherit;font-weight:700;padding:10px 18px;border:0;border-radius:8px;background:#0f766e;color:#fff;cursor:pointer;margin-top:14px}
+  .mono{font-family:Consolas,monospace;word-break:break-all}
+  .warn{background:#fdebd0;border-left:5px solid #b45309;padding:8px 12px;border-radius:0 8px 8px 0;margin-top:10px}
+  .ok{background:#dcf3e2;border-left:5px solid #15803d;padding:8px 12px;border-radius:0 8px 8px 0;margin-top:10px}
+</style>
+</head>
+<body>
+<h1>Canvas capture</h1>
+<p class="sub">Uniform script for the class data pool. Everybody renders exactly the same drawing; only the machine and the browser differ.</p>
+
+<ol>
+  <li>Fill in the fields below (use a <b>nickname</b>, not your real name).</li>
+  <li>Check that the image appeared.</li>
+  <li>Click <b>Save PNG</b> and put the downloaded image into <code>data/canvas/</code> of the shared repository.</li>
+</ol>
+<p>Repeat this in <b>every browser you have installed</b>. One image per browser. There is nothing to compute here: the image itself is the data.</p>
+
+<div class="row">
+  <div><label for="nick">Nickname</label><input id="nick" placeholder="e.g. fox42" maxlength="24"></div>
+  <div><label for="setting">Setting</label>
+    <select id="setting">
+      <option>default</option><option>private</option><option>extension</option><option>brave-shields</option>
+      <option>tor</option><option>mullvad</option><option>firefox-rfp</option><option>other</option>
+    </select></div>
+</div>
+<div class="row">
+  <div><label for="browser">Browser and version</label><input id="browser" placeholder="e.g. firefox-132"></div>
+  <div><label for="os">Operating system</label><input id="os" placeholder="e.g. windows11, macos14, ubuntu24, android14"></div>
+</div>
+
+<canvas id="cv" width="460" height="140"></canvas>
+<div id="status"></div>
+<p><b>File name:</b> <span class="mono" id="fname">&hellip;</span></p>
+<button id="save">Save PNG</button>
+
+<script>
+/* ---------- scene (identical for everybody: do not edit) ---------- */
+const SCENE_VERSION = 'v2';
+function drawScene(ctx, W, H) {
+  ctx.fillStyle = '#f4efe3'; ctx.fillRect(0, 0, W, H);                       // opaque background
+  const g = ctx.createLinearGradient(0, 0, W, 0);
+  g.addColorStop(0, '#1f6feb'); g.addColorStop(0.5, '#e5484d'); g.addColorStop(1, '#f5a524');
+  ctx.fillStyle = g; ctx.fillRect(10, 8, W - 20, 14);                         // gradient
+
+  ctx.textBaseline = 'alphabetic';
+  ctx.fillStyle = 'rgba(20,33,61,0.95)'; ctx.font = '20px Arial, sans-serif';
+  ctx.fillText('Cwm fjord bank glyphs vext quiz', 10, 46);                    // text, font 1
+  ctx.fillStyle = 'rgba(15,118,110,0.9)'; ctx.font = 'italic 17px Georgia, serif';
+  ctx.fillText('Sphinx of black quartz, judge my vow', 10, 70);              // text, font 2
+  ctx.fillStyle = '#333'; ctx.font = "15px 'Courier New', monospace";
+  ctx.fillText('0Oo 1Il| {} <> fi fl ffi', 10, 92);                           // monospace + ligatures
+  ctx.font = '18px sans-serif';
+  ctx.fillText('Ωμέγα Жук 漢字 한글 العربية', 10, 116); // Greek, Cyrillic, CJK, Hangul, Arabic
+  ctx.font = '22px sans-serif';
+  ctx.fillText('😀🦊🐙🎨🌍', 250, 116);                             // emoji
+
+  ctx.globalCompositeOperation = 'multiply';                                  // blending
+  [['#e5484d', 372, 74], ['#1f6feb', 398, 74], ['#f5a524', 385, 56]].forEach(([c, x, y]) => {
+    ctx.beginPath(); ctx.arc(x, y, 22, 0, Math.PI * 2); ctx.fillStyle = c; ctx.fill();
+  });
+  ctx.globalCompositeOperation = 'source-over';
+  ctx.save();                                                                 // curve with shadow
+  ctx.shadowColor = 'rgba(0,0,0,0.35)'; ctx.shadowBlur = 6; ctx.shadowOffsetX = 2; ctx.shadowOffsetY = 2;
+  ctx.strokeStyle = '#6d3fc0'; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.moveTo(300, 52); ctx.bezierCurveTo(322, 14, 358, 14, 392, 40); ctx.stroke();
+  ctx.restore();
+  ctx.save(); ctx.translate(448, 132); ctx.rotate(-Math.PI / 2);              // rotated text
+  ctx.font = 'bold 14px Verdana, sans-serif'; ctx.fillStyle = '#b45309'; ctx.fillText('rotated text', 0, 0);
+  ctx.restore();
+}
+
+/* ---------- page logic ---------- */
+const $ = id => document.getElementById(id);
+const clean = s => (s || '').toLowerCase().replace(/[^a-z0-9.\-]+/g, '-').replace(/^-+|-+$/g, '') || 'x';
+function guessBrowser() {
+  const u = navigator.userAgent; let m;
+  if ((m = u.match(/Edg\/(\d+)/))) return 'edge-' + m[1];
+  if ((m = u.match(/Firefox\/(\d+)/))) return 'firefox-' + m[1];
+  if ((m = u.match(/Chrome\/(\d+)/))) return (navigator.brave ? 'brave-' : 'chrome-') + m[1];
+  if ((m = u.match(/Version\/(\d+).*Safari/))) return 'safari-' + m[1];
+  return '';
+}
+function guessOS() {
+  const u = navigator.userAgent;
+  if (/Windows NT 10/.test(u)) return 'windows10-11'; if (/Android/.test(u)) return 'android';
+  if (/iPhone|iPad/.test(u)) return 'ios'; if (/Mac OS X/.test(u)) return 'macos'; if (/Linux/.test(u)) return 'linux';
+  return '';
+}
+const params = new URLSearchParams(location.search);
+try { $('nick').value = params.get('nick') || localStorage.getItem('fp_nick') || ''; } catch (e) { $('nick').value = params.get('nick') || ''; }
+$('browser').value = params.get('browser') || guessBrowser();
+$('os').value = params.get('os') || guessOS();
+if (params.get('setting')) $('setting').value = params.get('setting');
+
+const cv = $('cv'), ctx = cv.getContext('2d');
+const fileName = () => ['canvas', clean($('nick').value), clean($('browser').value), clean($('os').value), clean($('setting').value)].join('__') + '.png';
+function updateName() { $('fname').textContent = fileName(); }
+
+function render() {
+  drawScene(ctx, cv.width, cv.height);
+  let blank = false;
+  try {                                       // looks blank / blocked? (many protections do this)
+    const d = ctx.getImageData(0, 0, cv.width, cv.height).data, seen = new Set();
+    for (let i = 0; i < d.length && seen.size < 6; i += 4) seen.add((d[i] << 16) | (d[i + 1] << 8) | d[i + 2]);
+    blank = seen.size < 5;
+  } catch (e) { blank = true; }
+  $('status').innerHTML = blank
+    ? '<div class="warn"><b>The image looks blank or blocked.</b> This is a valid result (many protections do this). Save it anyway.</div>'
+    : '<div class="ok">Rendered. Check the fields above, then save the image.</div>';
+  updateName();
+}
+['nick', 'browser', 'os', 'setting'].forEach(id => $(id).addEventListener('input', () => {
+  updateName(); try { if (id === 'nick') localStorage.setItem('fp_nick', $('nick').value); } catch (e) {}
+}));
+$('save').addEventListener('click', () => {
+  if (!$('nick').value.trim()) { alert('Please enter a nickname first.'); return; }
+  cv.toBlob(png => {
+    const a = document.createElement('a'); a.href = URL.createObjectURL(png); a.download = fileName();
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+  }, 'image/png');
+});
+render();
+</script>
+</body>
+</html>

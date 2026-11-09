@@ -31,7 +31,7 @@ If a protection hides something (a blank canvas, almost no fonts), **that is a v
 ## Where the files go
 
 ```
-fingerprint-pool/
+web_technologies_erasmus/
 ├── README.md
 ├── tools/                 the two capture tools (do not edit)
 ├── data/
@@ -54,8 +54,8 @@ The tools build the file names for you. **Do not rename the files.**
 You will be added as a collaborator. Then:
 
 ```bash
-git clone <repository-url>
-cd fingerprint-pool
+git clone https://github.com/nikour/web_technologies_erasmus.git
+cd web_technologies_erasmus
 # copy your downloaded files into data/fonts/ and data/canvas/
 git add data
 git commit -m "Add fonts and canvas data from <nickname>"
